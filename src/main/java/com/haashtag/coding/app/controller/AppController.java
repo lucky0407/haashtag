@@ -5,8 +5,6 @@ package com.haashtag.coding.app.controller;
 
 import java.util.List;
 
-import javax.websocket.server.PathParam;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.haashtag.coding.app.bean.DistrictBean;
@@ -52,13 +51,13 @@ public class AppController {
 	 */
 	@SuppressWarnings("rawtypes")
 	@RequestMapping(value = "/state", method = RequestMethod.GET)
-	public ResponseEntity getStateDetails(@PathParam("name") String name) {
+	public ResponseEntity getStateDetails(@RequestParam("name") String name) {
 		
 		if(log.isDebugEnabled()) {
 			log.debug("AppController :: getStateDetails :: Enter");
 		}
 		
-		if(isValidString(name))
+		if(!isValidString(name))
 			return new ResponseEntity<String>("Invalid state name", HttpStatus.BAD_REQUEST);
 		
 		log.info("AppController :: getStateDetails :: calling state service");
@@ -85,13 +84,13 @@ public class AppController {
 	 */
 	@SuppressWarnings("rawtypes")
 	@RequestMapping(value = "/district", method = RequestMethod.GET)
-	public ResponseEntity getDistrictDetails(@PathParam("name") String name) {
+	public ResponseEntity getDistrictDetails(@RequestParam("name") String name) {
 		
 		if(log.isDebugEnabled()) {
 			log.debug("AppController :: getDistrictDetails :: Enter");
 		}
 		
-		if(isValidString(name))
+		if(!isValidString(name))
 			return new ResponseEntity<String>("Invalid district name", HttpStatus.BAD_REQUEST);
 		
 		log.info("AppController :: getDistrictDetails :: calling state service");
@@ -118,13 +117,13 @@ public class AppController {
 	 */
 	@SuppressWarnings("rawtypes")
 	@RequestMapping(value = "/town", method = RequestMethod.GET)
-	public ResponseEntity getTownDetails(@PathParam("name") String name) {
+	public ResponseEntity getTownDetails(@RequestParam("name") String name) {
 		
 		if(log.isDebugEnabled()) {
 			log.debug("AppController :: getTownDetails :: Enter");
 		}
 		
-		if(isValidString(name))
+		if(!isValidString(name))
 			return new ResponseEntity<String>("Invalid town name", HttpStatus.BAD_REQUEST);
 		
 		log.info("AppController :: getTownDetails :: calling state service");

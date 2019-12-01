@@ -10,6 +10,8 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,15 +61,18 @@ public class CsvReaderServiceImpl implements CsvReaderService {
 			log.debug("CsvReaderServiceImpl :: readCSV :: Enter");
 		}
 		StatusResponse response;
-		
+
 		// working with try with resource
 		try (Reader reader = Files.newBufferedReader(Paths.get(getFile(file).getAbsolutePath()));
-				CSVReader csvReader = new CSVReaderBuilder(reader).withSkipLines(1).build()) { // skipping the first line
+				CSVReader csvReader = new CSVReaderBuilder(reader).withSkipLines(1).build()) { // skipping the first
+																								// line
 
 			while (csvReader.readNext() != null) {
 				// reading the csv file trough lines
 				String[] next = csvReader.readNext();
 
+				if (next == null || next.length == 0)
+					break;
 				String town = next[1];
 				String urbanStatus = next[2];
 				String stateCode = next[3];
@@ -76,12 +81,12 @@ public class CsvReaderServiceImpl implements CsvReaderService {
 				String district = next[6];
 
 				log.info("CsvReaderServiceImpl :: readCSV :: checking state name and code are empty or not");
-				if (!StringUtils.isEmpty(stateCode) && !StringUtils.isEmpty(stateName)) {
+				if (StringUtils.isEmpty(stateCode) || StringUtils.isEmpty(stateName)) {
 					response = new StatusResponse();
 					response.setStatusCode(Constants.STATUS_CODE_FAILURE);
 					response.setStatuMessage(Constants.STATUS_MESSAGE_FAILURE);
 					response.setDescription("state code or state cannot be empty");
-					
+
 					log.info("CsvReaderServiceImpl :: readCSV :: state code or state cannot be empty");
 
 					return response;
@@ -89,54 +94,57 @@ public class CsvReaderServiceImpl implements CsvReaderService {
 				saveState(stateName.trim(), Integer.valueOf(stateCode.trim()));
 
 				log.info("CsvReaderServiceImpl :: readCSV :: checking district name and code are empty or not");
-				if (!StringUtils.isEmpty(districtCode) && !StringUtils.isEmpty(district)) {
+				if (StringUtils.isEmpty(districtCode) || StringUtils.isEmpty(district)) {
 					response = new StatusResponse();
 					response.setStatusCode(Constants.STATUS_CODE_FAILURE);
 					response.setStatuMessage(Constants.STATUS_MESSAGE_FAILURE);
 					response.setDescription("district code or district cannot be empty");
-					
+
 					log.info("CsvReaderServiceImpl :: readCSV :: district code or district cannot be empty");
 
 					return response;
 				}
-				saveDistrict(Integer.valueOf(districtCode.trim()), district.trim(), Integer.valueOf(stateCode));
+
+				if (districtCode.contains(" "))
+					replaceSpecialChars(districtCode);
+
+				saveDistrict(districtCode.trim(), district.trim(), Integer.valueOf(stateCode));
 
 				log.info("CsvReaderServiceImpl :: readCSV :: checking town name and urban status are empty or not");
-				if (!StringUtils.isEmpty(town) && !StringUtils.isEmpty(urbanStatus)) {
+				if (StringUtils.isEmpty(town) || StringUtils.isEmpty(urbanStatus)) {
 					response = new StatusResponse();
 					response.setStatusCode(Constants.STATUS_CODE_FAILURE);
 					response.setStatuMessage(Constants.STATUS_MESSAGE_FAILURE);
 					response.setDescription("urbanStatus or town cannot be empty");
-					
+
 					log.info("CsvReaderServiceImpl :: readCSV :: town name or urban status cannot be empty");
-					
+
 					if (log.isDebugEnabled()) {
 						log.debug("CsvReaderServiceImpl :: readCSV :: Exit");
 					}
 					return response;
 				}
-				saveTown(urbanStatus.trim(), town.trim(), Integer.valueOf(stateCode.trim()),
-						Integer.valueOf(districtCode.trim()));
+				saveTown(urbanStatus.trim(), town.trim(), Integer.valueOf(stateCode.trim()), districtCode.trim());
 			}
-			
+
 			response = new StatusResponse();
 			response.setStatusCode(Constants.STATUS_CODE_SUCCESS);
 			response.setStatuMessage(Constants.STATUS_MESSAGE_SUCCESS);
 			response.setDescription("successfully read csv and date stored in db");
-			
+
 			log.info("CsvReaderServiceImpl :: readCSV :: successfully read csv and date stored in db");
 
 			return response;
 		} catch (Exception e) {
-			log.error("exception while reading csv file",e);
-			
+			log.error("exception while reading csv file", e);
+
 			response = new StatusResponse();
 			response.setStatusCode(Constants.STATUS_CODE_EXCEPTION);
 			response.setStatuMessage(Constants.STATUS_MESSAGE_EXCEPTION);
 			response.setDescription("exception while reading csv file");
 
 			return response;
-			
+
 		}
 	}
 
@@ -193,19 +201,23 @@ public class CsvReaderServiceImpl implements CsvReaderService {
 	 * 
 	 * @param stateCode
 	 */
-	private void saveDistrict(int districtCode, String districtName, int stateCode) {
-		log.info("CsvReaderServiceImpl :: saveDistrict :: entering district dedails");
-		District district = districtRepo.findDistrictByCode(districtCode);
-		if (null == district) {
-			district = new District();
-			district.setAddedDate(new Date());
-			district.setDistrict(districtName);
-			district.setDistrictCode(districtCode);
-			district.setStateCode(stateCode);
+	private void saveDistrict(String districtCode, String districtName, int stateCode) {
 
-			log.info("CsvReaderServiceImpl :: saveDistrict :: saving district dedails");
-			districtRepo.save(district);
-			log.info("CsvReaderServiceImpl :: saveState :: district saved successfully");
+		String[] str = districtCode.split(districtCode);
+		for (String s : str) {
+			log.info("CsvReaderServiceImpl :: saveDistrict :: entering district dedails");
+			District district = districtRepo.findDistrictByCode(Integer.valueOf(s));
+			if (null == district) {
+				district = new District();
+				district.setAddedDate(new Date());
+				district.setDistrict(districtName);
+				district.setStateCode(stateCode);
+
+				district.setDistrictCode(Integer.valueOf(s));
+				log.info("CsvReaderServiceImpl :: saveDistrict :: saving district dedails");
+				districtRepo.save(district);
+				log.info("CsvReaderServiceImpl :: saveState :: district saved successfully");
+			}
 		}
 		log.info("CsvReaderServiceImpl :: saveDistrict :: district already exists");
 	}
@@ -221,22 +233,38 @@ public class CsvReaderServiceImpl implements CsvReaderService {
 	 * 
 	 * @param districtCode
 	 */
-	private void saveTown(String urbanStatus, String townName, int stateCode, int districtCode) {
+	private void saveTown(String urbanStatus, String townName, int stateCode, String districtCode) {
 		log.info("CsvReaderServiceImpl :: saveTown :: entering town dedails");
-		Town town = townRepo.findTownByCodesandName(districtCode, stateCode, townName);
-		if (null == town) {
-			town = new Town();
-			town.setAddedDate(new Date());
-			town.setDistrictCode(districtCode);
-			town.setStateCode(stateCode);
-			town.setTown(townName);
-			town.setUrbanStatus(urbanStatus);
+		String[] str = districtCode.split(" ");
+		for (String s : str) {
+			Town town = townRepo.findTownByCodesandName(Integer.valueOf(s), stateCode, townName);
+			if (null == town) {
+				town = new Town();
+				town.setAddedDate(new Date());
+				town.setStateCode(stateCode);
+				town.setTown(townName);
+				town.setUrbanStatus(urbanStatus);
 
-			log.info("CsvReaderServiceImpl :: saveTown :: saving town dedails");
-			townRepo.save(town);
-			log.info("CsvReaderServiceImpl :: saveTown :: town saved successfully");
+				town.setDistrictCode(Integer.valueOf(s));
+				log.info("CsvReaderServiceImpl :: saveTown :: saving town dedails");
+				townRepo.save(town);
+				log.info("CsvReaderServiceImpl :: saveTown :: town saved successfully");
+			}
 		}
 		log.info("CsvReaderServiceImpl :: saveTown :: town already exists");
 	}
 
+	private void replaceSpecialChars(String str) {
+
+		if (StringUtils.isEmpty(str))
+			return;
+
+		Pattern pattern = Pattern.compile("[a-zA-Z0-9]*");
+		Matcher m = pattern.matcher(str);
+
+		while (m.find()) {
+			log.info("CsvReaderServiceImpl :: replaceSpecialChars :: " + str);
+			str = str.replace(Character.toString(str.charAt(m.start())), " ");
+		}
+	}
 }

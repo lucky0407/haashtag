@@ -23,5 +23,5 @@ public interface StateRepo extends JpaRepository<State, Integer>{
 	public State findStateByCode(@Param("stateCode") Integer stateCode);
 	
 	@Query("select s from State s where s.state like %:state%")
-	public List<State> findStateByName(@Param("stateCode") String state);
+	public List<State> findStateByName(@Param("state") String state);
 }
