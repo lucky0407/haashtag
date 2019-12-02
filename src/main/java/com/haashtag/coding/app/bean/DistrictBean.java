@@ -11,7 +11,7 @@ public class DistrictBean {
 
 	private String town;
 	private String urbanStatus;
-	private Integer districtCode;
+	private String districtCode;
 	private String district;
 	private Integer stateCode;
 	private String state;
@@ -47,14 +47,14 @@ public class DistrictBean {
 	/**
 	 * @return the districtCode
 	 */
-	public Integer getDistrictCode() {
+	public String getDistrictCode() {
 		return districtCode;
 	}
 
 	/**
 	 * @param districtCode the districtCode to set
 	 */
-	public void setDistrictCode(Integer districtCode) {
+	public void setDistrictCode(String districtCode) {
 		this.districtCode = districtCode;
 	}
 

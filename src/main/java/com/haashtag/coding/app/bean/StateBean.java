@@ -10,7 +10,7 @@ package com.haashtag.coding.app.bean;
 public class StateBean {
 	
 	private String state;
-	private Integer districtCode;
+	private String districtCode;
 	private String district;
 	/**
 	 * @return the state
@@ -27,13 +27,13 @@ public class StateBean {
 	/**
 	 * @return the districtCode
 	 */
-	public Integer getDistrictCode() {
+	public String getDistrictCode() {
 		return districtCode;
 	}
 	/**
 	 * @param districtCode the districtCode to set
 	 */
-	public void setDistrictCode(Integer districtCode) {
+	public void setDistrictCode(String districtCode) {
 		this.districtCode = districtCode;
 	}
 	/**

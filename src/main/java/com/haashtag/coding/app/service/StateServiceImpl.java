@@ -47,7 +47,7 @@ public class StateServiceImpl implements StateService {
 		StatusResponse statusResponse;
 		try {
 			log.info("StateService :: getStates :: calling repository service");
-			List<State> states = stateRepo.findStateByName(state);
+			List<State> states = stateRepo.findStateByName("%"+state.toLowerCase()+"%");
 
 			if (CollectionUtils.isEmpty(states)) {
 				log.info("StateService :: getStates :: no states with name : " + state);

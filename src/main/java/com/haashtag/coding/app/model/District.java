@@ -35,7 +35,7 @@ public class District implements Serializable {
 	private String district;
 
 	@Column(name = "districtCode")
-	private Integer districtCode;
+	private String districtCode;
 
 	@Column(name = "stateCode")
 	private Integer stateCode;
@@ -74,14 +74,14 @@ public class District implements Serializable {
 	/**
 	 * @return the districtCode
 	 */
-	public Integer getDistrictCode() {
+	public String getDistrictCode() {
 		return districtCode;
 	}
 
 	/**
 	 * @param districtCode the districtCode to set
 	 */
-	public void setDistrictCode(Integer districtCode) {
+	public void setDistrictCode(String districtCode) {
 		this.districtCode = districtCode;
 	}
 

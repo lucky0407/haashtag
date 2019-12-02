@@ -41,7 +41,7 @@ public class Town implements Serializable {
 	private Integer stateCode;
 
 	@Column(name = "districtCode")
-	private Integer districtCode;
+	private String districtCode;
 
 	@Column(name = "addedDate")
 	private Date addedDate;
@@ -105,14 +105,14 @@ public class Town implements Serializable {
 	/**
 	 * @return the districtCode
 	 */
-	public Integer getDistrictCode() {
+	public String getDistrictCode() {
 		return districtCode;
 	}
 
 	/**
 	 * @param districtCode the districtCode to set
 	 */
-	public void setDistrictCode(Integer districtCode) {
+	public void setDistrictCode(String districtCode) {
 		this.districtCode = districtCode;
 	}
 

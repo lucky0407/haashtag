@@ -10,8 +10,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Date;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,13 +65,10 @@ public class CsvReaderServiceImpl implements CsvReaderService {
 		try (Reader reader = Files.newBufferedReader(Paths.get(getFile(file).getAbsolutePath()));
 				CSVReader csvReader = new CSVReaderBuilder(reader).withSkipLines(1).build()) { // skipping the first
 																								// line
-
-			while (csvReader.readNext() != null) {
-				// reading the csv file trough lines
-				String[] next = csvReader.readNext();
-
-				if (next == null || next.length == 0)
-					break;
+			
+			List<String[]> all = csvReader.readAll();
+			for (String[] next : all) {
+				
 				String town = next[1];
 				String urbanStatus = next[2];
 				String stateCode = next[3];
@@ -104,9 +100,6 @@ public class CsvReaderServiceImpl implements CsvReaderService {
 
 					return response;
 				}
-
-				if (districtCode.contains(" "))
-					replaceSpecialChars(districtCode);
 
 				saveDistrict(districtCode.trim(), district.trim(), Integer.valueOf(stateCode));
 
@@ -203,22 +196,20 @@ public class CsvReaderServiceImpl implements CsvReaderService {
 	 */
 	private void saveDistrict(String districtCode, String districtName, int stateCode) {
 
-		String[] str = districtCode.split(districtCode);
-		for (String s : str) {
-			log.info("CsvReaderServiceImpl :: saveDistrict :: entering district dedails");
-			District district = districtRepo.findDistrictByCode(Integer.valueOf(s));
-			if (null == district) {
-				district = new District();
-				district.setAddedDate(new Date());
-				district.setDistrict(districtName);
-				district.setStateCode(stateCode);
+		log.info("CsvReaderServiceImpl :: saveDistrict :: entering district dedails");
+		District district = districtRepo.findDistrictByCode(districtCode, stateCode);
+		if (null == district) {
+			district = new District();
+			district.setAddedDate(new Date());
+			district.setDistrict(districtName);
+			district.setStateCode(stateCode);
 
-				district.setDistrictCode(Integer.valueOf(s));
-				log.info("CsvReaderServiceImpl :: saveDistrict :: saving district dedails");
-				districtRepo.save(district);
-				log.info("CsvReaderServiceImpl :: saveState :: district saved successfully");
-			}
+			district.setDistrictCode(districtCode);
+			log.info("CsvReaderServiceImpl :: saveDistrict :: saving district dedails");
+			districtRepo.save(district);
+			log.info("CsvReaderServiceImpl :: saveState :: district saved successfully");
 		}
+
 		log.info("CsvReaderServiceImpl :: saveDistrict :: district already exists");
 	}
 
@@ -235,36 +226,16 @@ public class CsvReaderServiceImpl implements CsvReaderService {
 	 */
 	private void saveTown(String urbanStatus, String townName, int stateCode, String districtCode) {
 		log.info("CsvReaderServiceImpl :: saveTown :: entering town dedails");
-		String[] str = districtCode.split(" ");
-		for (String s : str) {
-			Town town = townRepo.findTownByCodesandName(Integer.valueOf(s), stateCode, townName);
-			if (null == town) {
-				town = new Town();
-				town.setAddedDate(new Date());
-				town.setStateCode(stateCode);
-				town.setTown(townName);
-				town.setUrbanStatus(urbanStatus);
 
-				town.setDistrictCode(Integer.valueOf(s));
-				log.info("CsvReaderServiceImpl :: saveTown :: saving town dedails");
-				townRepo.save(town);
-				log.info("CsvReaderServiceImpl :: saveTown :: town saved successfully");
-			}
-		}
-		log.info("CsvReaderServiceImpl :: saveTown :: town already exists");
+			Town town = new Town();
+			town.setAddedDate(new Date());
+			town.setStateCode(stateCode);
+			town.setTown(townName);
+			town.setUrbanStatus(urbanStatus);
+			town.setDistrictCode(districtCode);
+			log.info("CsvReaderServiceImpl :: saveTown :: saving town dedails");
+			townRepo.save(town);
+			log.info("CsvReaderServiceImpl :: saveTown :: town saved successfully");
 	}
 
-	private void replaceSpecialChars(String str) {
-
-		if (StringUtils.isEmpty(str))
-			return;
-
-		Pattern pattern = Pattern.compile("[a-zA-Z0-9]*");
-		Matcher m = pattern.matcher(str);
-
-		while (m.find()) {
-			log.info("CsvReaderServiceImpl :: replaceSpecialChars :: " + str);
-			str = str.replace(Character.toString(str.charAt(m.start())), " ");
-		}
-	}
 }

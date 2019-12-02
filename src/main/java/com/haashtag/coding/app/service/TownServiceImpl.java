@@ -76,7 +76,7 @@ public class TownServiceImpl implements TownService {
 			}
 			
 			log.info("TownService :: getTowns :: calling district repo service");
-			District district = districtRepo.findDistrictByCode(town.getDistrictCode());
+			District district = districtRepo.findDistrictByCode(town.getDistrictCode(), state.getStateCode());
 			if(null == district) {
 				log.info("TownService :: getTowns :: no district added for town with town name : "+townname);
 				response = new StatusResponse();
